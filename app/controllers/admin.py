@@ -59,44 +59,39 @@ class AdminIndexHandler(AdminBaseHandler):
         )
 
     def _get_menus(self):
-        return [
-            {
-                "id": 1,
-                "name": "用户管理",
-                "icon": "layui-icon-user",
-                "url": "/admin/users",
-            },
-            {
-                "id": 2,
-                "name": "角色管理",
-                "icon": "layui-icon-group",
-                "url": "/admin/roles",
-            },
-            {
-                "id": 3,
-                "name": "权限管理",
-                "icon": "layui-icon-auz",
-                "url": "/admin/permissions",
-            },
-            {
-                "id": 4,
-                "name": "功能管理",
-                "icon": "layui-icon-app",
-                "url": "/admin/menus",
-            },
-            {
-                "id": 5,
-                "name": "模型引擎",
-                "icon": "layui-icon-engine",
-                "url": "/admin/models",
-            },
-        ]
+        from app.models.db import get_connection
+
+        with get_connection() as conn:
+            rows = conn.execute(
+                "select id, name, icon, url, parent_id, sort_order from menus where is_visible=1 order by sort_order, id"
+            ).fetchall()
+        return [dict(r) for r in rows]
 
 
 class AdminUserPageHandler(AdminBaseHandler):
     @tornado.web.authenticated
     def get(self):
         self.render("admin/users.html", title="用户管理", username=self.current_user)
+
+
+class AdminMenuPageHandler(AdminBaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        self.render("admin/menus.html", title="功能管理", username=self.current_user)
+
+
+class AdminRolePageHandler(AdminBaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        self.render("admin/roles.html", title="角色管理", username=self.current_user)
+
+
+class AdminPermPageHandler(AdminBaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        self.render(
+            "admin/permissions.html", title="权限管理", username=self.current_user
+        )
 
 
 class AdminPlaceholderHandler(AdminBaseHandler):
@@ -215,27 +210,36 @@ class AdminRoleApiHandler(AdminBaseHandler):
             )
             self.write({"code": 0, "msg": "添加成功"})
         elif action == "update":
-            RoleRepository.update_role(
+            if RoleRepository.update_role(
                 body["id"], body["name"], body.get("description", "")
-            )
-            self.write({"code": 0, "msg": "更新成功"})
+            ):
+                self.write({"code": 0, "msg": "更新成功"})
+            else:
+                self.write({"code": -1, "msg": "无法修改系统角色"})
         elif action == "delete":
             if RoleRepository.delete_role(body["id"]):
                 self.write({"code": 0, "msg": "删除成功"})
             else:
                 self.write({"code": -1, "msg": "无法删除系统角色"})
         elif action == "set_permissions":
-            RoleRepository.set_role_permissions(
+            if RoleRepository.set_role_permissions(
                 body["id"], body.get("permission_ids", [])
-            )
-            self.write({"code": 0, "msg": "权限设置成功"})
+            ):
+                self.write({"code": 0, "msg": "权限设置成功"})
+            else:
+                self.write({"code": -1, "msg": "无法修改超级管理员权限"})
 
 
 class AdminPermApiHandler(AdminBaseHandler):
     @tornado.web.authenticated
     def get(self):
-        perms = PermissionRepository.get_permissions_by_category()
-        self.write({"code": 0, "data": perms})
+        action = self.get_argument("action", "")
+        if action == "all":
+            perms = PermissionRepository.get_all_permissions()
+            self.write({"code": 0, "data": [dict(p) for p in perms]})
+        else:
+            perms = PermissionRepository.get_permissions_by_category()
+            self.write({"code": 0, "data": perms})
 
     @tornado.web.authenticated
     def post(self):
@@ -246,6 +250,13 @@ class AdminPermApiHandler(AdminBaseHandler):
                 body["name"], body["code"], body.get("category", "")
             )
             self.write({"code": 0, "msg": "添加成功"})
+        elif action == "update":
+            with get_connection() as conn:
+                conn.execute(
+                    "update permissions set name=?, code=?, category=? where id=?",
+                    (body["name"], body["code"], body.get("category", ""), body["id"]),
+                )
+            self.write({"code": 0, "msg": "更新成功"})
         elif action == "delete":
             with get_connection() as conn:
                 conn.execute(
@@ -275,13 +286,14 @@ class AdminMenuApiHandler(AdminBaseHandler):
         if action == "add":
             with get_connection() as conn:
                 conn.execute(
-                    "insert into menus (name, icon, url, parent_id, sort_order) values (?,?,?,?,?)",
+                    "insert into menus (name, icon, url, parent_id, sort_order, is_visible) values (?,?,?,?,?,?)",
                     (
                         body["name"],
                         body.get("icon", ""),
                         body.get("url", ""),
                         body.get("parent_id", 0),
                         body.get("sort_order", 0),
+                        body.get("is_visible", 1),
                     ),
                 )
             self.write({"code": 0, "msg": "添加成功"})

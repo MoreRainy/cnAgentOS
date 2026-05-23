@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功能管理 - cnAgentOS</title>
+    <link rel="stylesheet" href="{{static_url('dist/layui/css/layui.css')}}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .layui-table {
+            margin: 0;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .layui-table th {
+            background: #f8fafc !important;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        /* 优化弹窗表单标签，防止换行 */
+        .layui-layer-content .layui-form-label {
+            width: 100px;
+            padding: 9px 10px;
+        }
+
+        .layui-layer-content .layui-input-block {
+            margin-left: 120px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toolbar">
+        <div>
+            <button class="layui-btn layui-btn-sm" id="btnAdd" style="background: #0f3460;">
+                <i class="layui-icon layui-icon-addition"></i> 新增菜单
+            </button>
+        </div>
+    </div>
+    <table class="layui-hide" id="menuTable" lay-filter="menuTable"></table>
+    <script type="text/html" id="toolbarTpl" style="display:none;"></script>
+
+    <script src="{{static_url('dist/layui/layui.js')}}"></script>
+    <script>
+        function getCookie(name) {
+            var r = document.cookie.match("\\b" + name + "=([^;]*)\\b");
+            return r ? r[1] : undefined;
+        }
+
+        var layuiTplStr = [
+            '<div class="layui-btn-container">',
+            '    <button class="layui-btn layui-btn-xs" lay-event="edit"><i class="layui-icon layui-icon-edit"></i> 编辑</button>',
+            '    <button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="delete"><i class="layui-icon layui-icon-delete"></i> 删除</button>',
+            '</div>'
+        ].join('\n');
+        document.getElementById('toolbarTpl').innerHTML = layuiTplStr;
+
+        layui.use(['table', 'layer', 'form', 'jquery'], function () {
+            var table = layui.table, layer = layui.layer, form = layui.form, $ = layui.jquery;
+
+            $.ajaxSetup({
+                beforeSend: function (jqXHR, settings) {
+                    if (settings.type === 'POST' || settings.type === 'PUT' || settings.type === 'DELETE') {
+                        jqXHR.setRequestHeader("X-XSRFToken", getCookie("_xsrf"));
+                    }
+                }
+            });
+
+            table.render({
+                elem: '#menuTable',
+                url: '/admin/api/menus',
+                page: false,
+                cols: [[
+                    { field: 'id', title: 'ID', width: 80, sort: true },
+                    { field: 'name', title: '菜单名称', width: 150 },
+                    { field: 'icon', title: '图标 (layui-icon)', width: 180 },
+                    { field: 'url', title: '路由地址', minWidth: 200 },
+                    { field: 'sort_order', title: '排序', width: 80, sort: true },
+                    { field: 'is_visible', title: '是否可见', width: 100, templet: function (d) { return d.is_visible ? '<span class="layui-badge layui-bg-blue">可见</span>' : '<span class="layui-badge layui-bg-gray">隐藏</span>'; } },
+                    { fixed: 'right', title: '操作', toolbar: '#toolbarTpl', width: 160 }
+                ]],
+                parseData: function (res) {
+                    return { code: res.code, msg: res.msg, data: res.data };
+                }
+            });
+
+            table.on('tool(menuTable)', function (obj) {
+                var data = obj.data;
+                if (obj.event === 'delete') {
+                    layer.confirm('确定删除菜单 "' + data.name + '" 吗？', function (index) {
+                        $.ajax({
+                            url: '/admin/api/menus', type: 'POST', contentType: 'application/json',
+                            data: JSON.stringify({ action: 'delete', id: data.id }),
+                            success: function (res) {
+                                layer.msg(res.msg, { icon: res.code === 0 ? 1 : 2 });
+                                table.reload('menuTable');
+                            }
+                        });
+                        layer.close(index);
+                    });
+                } else if (obj.event === 'edit') {
+                    var isVisibleChecked = data.is_visible ? 'checked' : '';
+                    var html = '<form class="layui-form" id="editForm" style="padding: 20px;">'
+                        + '<div class="layui-form-item"><label class="layui-form-label">菜单名称</label>'
+                        + '<div class="layui-input-block"><input type="text" name="name" required lay-verify="required" class="layui-input" autocomplete="off" value="' + data.name + '"></div></div>'
+                        + '<div class="layui-form-item"><label class="layui-form-label">图标类名</label>'
+                        + '<div class="layui-input-block"><input type="text" name="icon" class="layui-input" autocomplete="off" value="' + (data.icon || '') + '"></div></div>'
+                        + '<div class="layui-form-item"><label class="layui-form-label">路由地址</label>'
+                        + '<div class="layui-input-block"><input type="text" name="url" class="layui-input" autocomplete="off" value="' + (data.url || '') + '"></div></div>'
+                        + '<div class="layui-form-item"><label class="layui-form-label">排序</label>'
+                        + '<div class="layui-input-block"><input type="number" name="sort_order" class="layui-input" value="' + data.sort_order + '"></div></div>'
+                        + '<div class="layui-form-item"><label class="layui-form-label">是否可见</label>'
+                        + '<div class="layui-input-block"><input type="checkbox" name="is_visible" lay-skin="switch" lay-text="可见|隐藏" ' + isVisibleChecked + '></div></div>'
+                        + '</form>';
+                    layer.open({
+                        title: '编辑菜单', content: html, btn: ['确定', '取消'], area: ['550px'],
+                        yes: function (index, layero) {
+                            var name = layero.find('input[name="name"]').val().trim();
+                            var icon = layero.find('input[name="icon"]').val().trim();
+                            var url = layero.find('input[name="url"]').val().trim();
+                            var sort_order = parseInt(layero.find('input[name="sort_order"]').val()) || 0;
+                            var is_visible = layero.find('input[name="is_visible"]').prop('checked') ? 1 : 0;
+
+                            if (!name) return layer.msg('请填写菜单名称', { icon: 0 });
+
+                            $.ajax({
+                                url: '/admin/api/menus', type: 'POST', contentType: 'application/json',
+                                data: JSON.stringify({ action: 'update', id: data.id, name: name, icon: icon, url: url, sort_order: sort_order, is_visible: is_visible }),
+                                success: function (res) {
+                                    layer.msg(res.msg, { icon: res.code === 0 ? 1 : 2 });
+                                    if (res.code === 0) { layer.close(index); table.reload('menuTable'); window.parent.location.reload(); }
+                                }
+                            });
+                        }
+                    });
+                    form.render();
+                }
+            });
+
+            $('#btnAdd').on('click', function () {
+                var html = '<form class="layui-form" id="addForm" style="padding: 20px;">'
+                    + '<div class="layui-form-item"><label class="layui-form-label">菜单名称</label>'
+                    + '<div class="layui-input-block"><input type="text" name="name" required lay-verify="required" class="layui-input" autocomplete="off"></div></div>'
+                    + '<div class="layui-form-item"><label class="layui-form-label">图标类名</label>'
+                    + '<div class="layui-input-block"><input type="text" name="icon" class="layui-input" autocomplete="off" placeholder="layui-icon-xxx"></div></div>'
+                    + '<div class="layui-form-item"><label class="layui-form-label">路由地址</label>'
+                    + '<div class="layui-input-block"><input type="text" name="url" class="layui-input" autocomplete="off" placeholder="/admin/xxx"></div></div>'
+                    + '<div class="layui-form-item"><label class="layui-form-label">排序</label>'
+                    + '<div class="layui-input-block"><input type="number" name="sort_order" class="layui-input" value="0"></div></div>'
+                    + '<div class="layui-form-item"><label class="layui-form-label">是否可见</label>'
+                    + '<div class="layui-input-block"><input type="checkbox" name="is_visible" lay-skin="switch" lay-text="可见|隐藏" checked></div></div>'
+                    + '</form>';
+                layer.open({
+                    title: '新增菜单', content: html, btn: ['确定', '取消'], area: ['550px'],
+                    yes: function (index, layero) {
+                        var name = layero.find('input[name="name"]').val().trim();
+                        var icon = layero.find('input[name="icon"]').val().trim();
+                        var url = layero.find('input[name="url"]').val().trim();
+                        var sort_order = parseInt(layero.find('input[name="sort_order"]').val()) || 0;
+                        var is_visible = layero.find('input[name="is_visible"]').prop('checked') ? 1 : 0;
+
+                        if (!name) return layer.msg('请填写菜单名称', { icon: 0 });
+
+                        $.ajax({
+                            url: '/admin/api/menus', type: 'POST', contentType: 'application/json',
+                            data: JSON.stringify({ action: 'add', name: name, icon: icon, url: url, sort_order: sort_order, is_visible: is_visible }),
+                            success: function (res) {
+                                layer.msg(res.msg, { icon: res.code === 0 ? 1 : 2 });
+                                if (res.code === 0) { layer.close(index); table.reload('menuTable'); window.parent.location.reload(); }
+                            }
+                        });
+                    }
+                });
+                form.render();
+            });
+        });
+    </script>
+</body>
+
+</html>

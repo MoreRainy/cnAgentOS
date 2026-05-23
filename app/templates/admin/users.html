@@ -49,6 +49,16 @@
             font-weight: 500;
             color: #475569;
         }
+
+        /* 优化弹窗表单标签，防止换行 */
+        .layui-layer-content .layui-form-label {
+            width: 100px;
+            padding: 9px 10px;
+        }
+
+        .layui-layer-content .layui-input-block {
+            margin-left: 120px;
+        }
     </style>
 </head>
 
@@ -174,7 +184,7 @@
                                 title: '设置角色 - ' + data.username,
                                 content: html,
                                 btn: ['确定', '取消'],
-                                area: ['400px'],
+                                area: ['550px'],
                                 yes: function (index, layero) {
                                     var ids = [];
                                     layero.find('input:checked[name="role_ids"]').each(function () { ids.push(parseInt($(this).val())); });
@@ -206,7 +216,7 @@
                                 + '<div class="layui-form-item"><label class="layui-form-label">角色</label>'
                                 + '<div class="layui-input-block">' + roleOptions + '</div></div></form>';
                             layer.open({
-                                title: '编辑用户', content: html, btn: ['确定', '取消'], area: ['450px'],
+                                title: '编辑用户', content: html, btn: ['确定', '取消'], area: ['550px'],
                                 yes: function (index, layero) {
                                     var username = layero.find('input[name="username"]').val().trim();
                                     var ids = [];
@@ -249,7 +259,7 @@
                         + '<div class="layui-form-item"><label class="layui-form-label">角色</label>'
                         + '<div class="layui-input-block">' + roleOptions + '</div></div></form>';
                     layer.open({
-                        title: '新增用户', content: html, btn: ['确定', '取消'], area: ['450px'],
+                        title: '新增用户', content: html, btn: ['确定', '取消'], area: ['550px'],
                         yes: function (index, layero) {
                             var username = layero.find('input[name="username"]').val().trim();
                             var password = layero.find('input[name="password"]').val().trim();

@@ -47,6 +47,11 @@ class RoleRepository:
     @staticmethod
     def update_role(role_id: int, name: str, description: str) -> bool:
         with get_connection() as conn:
+            is_sys = conn.execute(
+                "select is_system from roles where id=?", (role_id,)
+            ).fetchone()
+            if is_sys and is_sys[0]:
+                return False
             conn.execute(
                 "update roles set name=?, description=? where id=?",
                 (name, description, role_id),
@@ -74,6 +79,11 @@ class RoleRepository:
     @staticmethod
     def set_role_permissions(role_id: int, permission_ids: list) -> bool:
         with get_connection() as conn:
+            is_sys = conn.execute(
+                "select code from roles where id=?", (role_id,)
+            ).fetchone()
+            if is_sys and is_sys[0] == "super_admin":
+                return False
             conn.execute("delete from role_permissions where role_id=?", (role_id,))
             for pid in permission_ids:
                 conn.execute(

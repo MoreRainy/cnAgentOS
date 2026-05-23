@@ -4,12 +4,10 @@
 # 程序：本体-智能瞭望与智能问数系统 B/S架构
 
 import os
-from tornado import autoreload
 import tornado.ioloop
 import tornado.web
 from tornado.httpserver import HTTPServer
 
-from app.controllers.base import BaseHandler
 from app.controllers.auth import LogoutHandler, RegisterHandler
 from app.controllers.home import IndexHandler
 from app.controllers.chat import (
@@ -25,6 +23,9 @@ from app.controllers.admin import (
     AdminLogoutHandler,
     AdminIndexHandler,
     AdminUserPageHandler,
+    AdminMenuPageHandler,
+    AdminRolePageHandler,
+    AdminPermPageHandler,
     AdminPlaceholderHandler,
     AdminUserApiHandler,
     AdminRoleApiHandler,
@@ -60,6 +61,9 @@ def make_app():
             (r"/admin/logout", AdminLogoutHandler),
             (r"/admin", AdminIndexHandler),
             (r"/admin/users", AdminUserPageHandler),
+            (r"/admin/menus", AdminMenuPageHandler),
+            (r"/admin/roles", AdminRolePageHandler),
+            (r"/admin/permissions", AdminPermPageHandler),
             (r"/admin/api/users", AdminUserApiHandler),
             (r"/admin/api/roles", AdminRoleApiHandler),
             (r"/admin/api/permissions", AdminPermApiHandler),
