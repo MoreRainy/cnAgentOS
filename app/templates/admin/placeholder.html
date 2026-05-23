@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{page_title}} - cnAgentOS</title>
+    <link rel="stylesheet" href="{{static_url('dist/layui/css/layui.css')}}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f5f7fa; padding: 20px; }
+        .placeholder { text-align: center; padding: 80px 20px; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .placeholder i { font-size: 64px; color: #0f3460; margin-bottom: 20px; }
+        .placeholder h3 { color: #334155; margin-bottom: 10px; }
+        .placeholder p { color: #94a3b8; }
+        .toolbar { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button class="layui-btn layui-btn-sm" id="btnAdd" style="background: #0f3460;">
+            <i class="layui-icon layui-icon-addition"></i> 新增{{add_label}}
+        </button>
+    </div>
+    <div class="placeholder">
+        <i class="layui-icon {{icon_class}}"></i>
+        <h3>{{page_title}}</h3>
+        <p>该模块正在开发中，敬请期待...</p>
+    </div>
+    <script src="{{static_url('dist/layui/layui.js')}}"></script>
+</body>
+</html>

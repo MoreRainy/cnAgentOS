@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} - cnAgentOS</title>
+    <link rel="stylesheet" href="{{static_url('dist/layui/css/layui.css')}}">
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+        .admin-layout { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+        .admin-header { height: 56px; background: linear-gradient(135deg, #1a1a2e, #16213e); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000; }
+        .admin-header .logo { color: #fff; font-size: 18px; font-weight: 600; letter-spacing: 1px; }
+        .admin-header .logo i { margin-right: 8px; }
+        .admin-header .user-info { display: flex; align-items: center; gap: 12px; }
+        .admin-header .user-info span { color: rgba(255,255,255,0.85); font-size: 14px; }
+        .admin-header .btn-logout { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .admin-header .btn-logout:hover { background: rgba(255,255,255,0.2); }
+        .admin-body { display: flex; flex: 1; overflow: hidden; }
+        .admin-sidebar { width: 220px; background: #fff; border-right: 1px solid #e6e6e6; overflow-y: auto; padding: 12px 0; flex-shrink: 0; }
+        .admin-sidebar .menu-item { display: flex; align-items: center; padding: 12px 20px; color: #334155; font-size: 14px; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
+        .admin-sidebar .menu-item:hover { background: #f1f5f9; color: #0f3460; border-left-color: #0f3460; }
+        .admin-sidebar .menu-item.active { background: #e8f0fe; color: #0f3460; border-left-color: #0f3460; font-weight: 500; }
+        .admin-sidebar .menu-item i { margin-right: 10px; font-size: 18px; }
+        .admin-workspace { flex: 1; background: #f5f7fa; overflow: hidden; position: relative; }
+        .admin-workspace iframe { width: 100%; height: 100%; border: none; display: block; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-header">
+            <div class="logo"><i class="layui-icon layui-icon-engine"></i> cnAgentOS 管理后台</div>
+            <div class="user-info">
+                <i class="layui-icon layui-icon-username" style="color: rgba(255,255,255,0.7); font-size: 20px;"></i>
+                <span>{{ username }}</span>
+                <form action="/admin/logout" method="post" style="display: inline;">
+                    {% module xsrf_form_html() %}
+                    <button type="submit" class="btn-logout"><i class="layui-icon layui-icon-logout"></i> 退出</button>
+                </form>
+            </div>
+        </div>
+        <div class="admin-body">
+            <div class="admin-sidebar">
+                {% for m in menus %}
+                <div class="menu-item {% if m['url'] == '/admin/users' %}active{% end %}" data-url="{{m['url']}}">
+                    <i class="layui-icon {{m['icon']}}"></i>
+                    <span>{{m['name']}}</span>
+                </div>
+                {% end %}
+            </div>
+            <div class="admin-workspace">
+                <iframe id="workspaceFrame" src="/admin/users" sandbox="allow-same-origin allow-scripts allow-forms allow-modals"></iframe>
+            </div>
+        </div>
+    </div>
+    <script src="{{static_url('dist/layui/layui.js')}}"></script>
+    <script>
+        layui.use(['layer'], function () {
+            document.querySelectorAll('.menu-item').forEach(function (el) {
+                el.addEventListener('click', function () {
+                    document.querySelectorAll('.menu-item').forEach(function (i) { i.classList.remove('active'); });
+                    this.classList.add('active');
+                    var url = this.getAttribute('data-url');
+                    if (url) document.getElementById('workspaceFrame').src = url;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

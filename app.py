@@ -20,7 +20,18 @@ from app.controllers.chat import (
     ChatDeleteHandler,
 )
 from app.controllers.auth import LoginHandler
-from app.models.db import init_db
+from app.controllers.admin import (
+    AdminLoginHandler,
+    AdminLogoutHandler,
+    AdminIndexHandler,
+    AdminUserPageHandler,
+    AdminPlaceholderHandler,
+    AdminUserApiHandler,
+    AdminRoleApiHandler,
+    AdminPermApiHandler,
+    AdminMenuApiHandler,
+)
+from app.models.db import init_db, seed_admin_data
 
 
 def make_app():
@@ -45,6 +56,15 @@ def make_app():
             (r"/chat/api/send", ChatSendHandler),
             (r"/chat/api/(\d+)", ChatDetailHandler),
             (r"/chat/api/(\d+)/delete", ChatDeleteHandler),
+            (r"/admin/login", AdminLoginHandler),
+            (r"/admin/logout", AdminLogoutHandler),
+            (r"/admin", AdminIndexHandler),
+            (r"/admin/users", AdminUserPageHandler),
+            (r"/admin/api/users", AdminUserApiHandler),
+            (r"/admin/api/roles", AdminRoleApiHandler),
+            (r"/admin/api/permissions", AdminPermApiHandler),
+            (r"/admin/api/menus", AdminMenuApiHandler),
+            (r"/admin/(\w+)", AdminPlaceholderHandler),
             (r"/", IndexHandler),
         ],
         **settings,
@@ -52,7 +72,8 @@ def make_app():
 
 
 if __name__ == "__main__":
-    init_db()  # 初始化数据库
+    init_db()
+    seed_admin_data()
     app = make_app()
     server = HTTPServer(app)
     server.bind(10086)
