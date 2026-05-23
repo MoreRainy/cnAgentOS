@@ -10,10 +10,17 @@ import tornado.web
 from tornado.httpserver import HTTPServer
 
 from app.controllers.base import BaseHandler
-from app.controllers.auth import LogoutHandler
+from app.controllers.auth import LogoutHandler, RegisterHandler
 from app.controllers.home import IndexHandler
-from app.controllers.auth import LoginHandler  # 引入auth -controller层
-from app.models.db import init_db  # 引入db -model层
+from app.controllers.chat import (
+    ChatHandler,
+    ChatApiHandler,
+    ChatSendHandler,
+    ChatDetailHandler,
+    ChatDeleteHandler,
+)
+from app.controllers.auth import LoginHandler
+from app.models.db import init_db
 
 
 def make_app():
@@ -24,7 +31,7 @@ def make_app():
         static_path=os.path.join(base_url, "app", "static"),  # 静态文件路径
         debug=True,  # 开启调试模式, 会打印日志
         cookie_secret="123456",  # 加密cookie的密钥
-        login_url="/login.jsp",  # 登录页的URL
+        login_url="/auth/login",  # 登录页的URL
         xsrf_cookies=True,  # 开启xsrf保护
         autoreload=True,  # 开启自动重新加载
     )
@@ -32,6 +39,12 @@ def make_app():
         [
             (r"/auth/login", LoginHandler),
             (r"/auth/logout", LogoutHandler),
+            (r"/auth/register", RegisterHandler),
+            (r"/chat", ChatHandler),
+            (r"/chat/api", ChatApiHandler),
+            (r"/chat/api/send", ChatSendHandler),
+            (r"/chat/api/(\d+)", ChatDetailHandler),
+            (r"/chat/api/(\d+)/delete", ChatDeleteHandler),
             (r"/", IndexHandler),
         ],
         **settings,

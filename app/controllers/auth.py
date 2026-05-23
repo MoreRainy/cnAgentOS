@@ -37,3 +37,50 @@ class LogoutHandler(BaseHandler):
     def post(self):
         self.clear_cookie("username")
         self.redirect("/auth/login")
+
+
+class RegisterHandler(BaseHandler):
+    # /auth/register
+    def get(self):
+        self.render("register.html", title="注册", error=None, success=None)
+
+    def post(self):
+        username = (self.get_argument("username", "") or "").strip()
+        password = self.get_argument("password", "")
+        confirm_password = self.get_argument("confirm_password", "")
+
+        if not username or not password or not confirm_password:
+            self.set_status(400)
+            return self.render(
+                "register.html", title="注册", error="所有字段均为必填项", success=None
+            )
+
+        if len(username) < 2 or len(username) > 20:
+            self.set_status(400)
+            return self.render(
+                "register.html", title="注册", error="用户名长度必须在2-20个字符之间", success=None
+            )
+
+        if len(password) < 6:
+            self.set_status(400)
+            return self.render(
+                "register.html", title="注册", error="密码长度不能少于6位", success=None
+            )
+
+        if password != confirm_password:
+            self.set_status(400)
+            return self.render(
+                "register.html", title="注册", error="两次输入的密码不一致", success=None
+            )
+
+        if UserRepository.create_user(username, password):
+            self.render(
+                "register.html",
+                title="注册",
+                error=None,
+                success="注册成功，请登录",
+            )
+        else:
+            self.render(
+                "register.html", title="注册", error="用户名已存在", success=None
+            )

@@ -35,4 +35,31 @@ def init_db():
             )
         """
         )
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS conversations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL DEFAULT('新对话'),
+                created_at DATETIME DEFAULT(datetime('now','localtime')),
+                updated_at DATETIME DEFAULT(datetime('now','localtime')),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        """
+        )
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conversation_id INTEGER NOT NULL,
+                role TEXT NOT NULL CHECK(role IN ('user', 'assistant')),
+                content TEXT NOT NULL,
+                created_at DATETIME DEFAULT(datetime('now','localtime')),
+                FOREIGN KEY (conversation_id) REFERENCES conversations(id)
+            )
+        """
+        )
+
         conn.commit()
