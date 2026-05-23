@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block body %}
+<h3>登录</h3>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% end %}
+
+<form action="/auth/login" method="post">
+    <input name="username" placeholder="请输入用户名" default="admin">
+    <input name="password" placeholder="请输入密码" default="123456">
+    <button type="submit">登录admin</button>
+    {% module xsrf_form_html() %}
+</form>
+{% end %}
