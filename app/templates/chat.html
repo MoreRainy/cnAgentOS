@@ -91,6 +91,19 @@
     layui.use(['layer', 'jquery'], function () {
         var layer = layui.layer, $ = layui.jquery;
 
+        $.ajaxSetup({
+            beforeSend: function (jqXHR, settings) {
+                if (settings.type === 'POST' || settings.type === 'PUT' || settings.type === 'DELETE') {
+                    jqXHR.setRequestHeader('X-XSRFToken', getCookie('_xsrf'));
+                }
+            }
+        });
+
+        function getCookie(name) {
+            var r = document.cookie.match('\\b' + name + '=([^;]*)\\b');
+            return r ? r[1] : undefined;
+        }
+
         /**
          * 加载左侧所有对话列表
          */
@@ -196,6 +209,7 @@
                 url: '/chat/api/send',
                 type: 'POST',
                 contentType: 'application/json',
+                headers: { 'X-XSRFToken': getCookie('_xsrf') },
                 data: JSON.stringify(body),
                 // 流式接收数据
                 xhrFields: {
@@ -227,9 +241,14 @@
                     }
                 },
                 // 请求失败处理
-                error: function () {
+                error: function (xhr) {
                     isStreaming = false;
-                    $('#streamingMessage').text('请求失败，请稍后重试');
+                    var msg = '请求失败，请稍后重试';
+                    if (xhr && xhr.status === 403) {
+                        msg = '无权限或校验失败，请刷新页面后重试';
+                    }
+                    $('#streamingMessage').text(msg);
+                    layer.msg(msg, { icon: 2 });
                 }
             });
         }

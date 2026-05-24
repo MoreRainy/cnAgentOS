@@ -80,6 +80,13 @@
                     if (settings.type === 'POST' || settings.type === 'PUT' || settings.type === 'DELETE') {
                         jqXHR.setRequestHeader("X-XSRFToken", getCookie("_xsrf"));
                     }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 403) {
+                        var msg = '无权限执行该操作';
+                        try { var res = JSON.parse(xhr.responseText || '{}'); msg = res.msg || msg; } catch (e) {}
+                        layer.msg(msg, { icon: 2 });
+                    }
                 }
             });
 

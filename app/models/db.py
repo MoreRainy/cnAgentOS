@@ -268,18 +268,58 @@ def seed_admin_data():
         super_role = conn.execute(
             "select id from roles where code='super_admin'"
         ).fetchone()
+        admin_role = conn.execute(
+            "select id from roles where code='admin'"
+        ).fetchone()
+        user_role = conn.execute(
+            "select id from roles where code='user'"
+        ).fetchone()
+
         if super_role:
-            perm_count = conn.execute(
-                "select count(*) from role_permissions where role_id=?",
-                (super_role["id"],),
-            ).fetchone()[0]
-            if perm_count == 0:
-                all_perms = conn.execute("select id from permissions").fetchall()
-                for p in all_perms:
-                    conn.execute(
-                        "insert or ignore into role_permissions (role_id, permission_id) values (?, ?)",
-                        (super_role["id"], p["id"]),
-                    )
+            all_perms = conn.execute("select id from permissions").fetchall()
+            for p in all_perms:
+                conn.execute(
+                    "insert or ignore into role_permissions (role_id, permission_id) values (?, ?)",
+                    (super_role["id"], p["id"]),
+                )
+
+        if admin_role:
+            admin_codes = [
+                "user:view", "user:add", "user:edit", "user:delete",
+                "role:view", "role:add", "role:edit", "role:delete",
+                "perm:view", "perm:add", "perm:delete",
+                "menu:view", "menu:add", "menu:edit", "menu:delete",
+                "model:view", "model:add", "model:edit", "model:delete", "model:test",
+            ]
+            perm_rows = conn.execute(
+                "select id, code from permissions where code in (%s)"
+                % ",".join(["?"] * len(admin_codes)),
+                tuple(admin_codes),
+            ).fetchall()
+            for p in perm_rows:
+                conn.execute(
+                    "insert or ignore into role_permissions (role_id, permission_id) values (?, ?)",
+                    (admin_role["id"], p["id"]),
+                )
+
+        if user_role:
+            user_codes = ["user:view"]
+            perm_rows = conn.execute(
+                "select id, code from permissions where code in (%s)"
+                % ",".join(["?"] * len(user_codes)),
+                tuple(user_codes),
+            ).fetchall()
+            for p in perm_rows:
+                conn.execute(
+                    "insert or ignore into role_permissions (role_id, permission_id) values (?, ?)",
+                    (user_role["id"], p["id"]),
+                )
+
+        if user_role:
+            conn.execute(
+                "insert or ignore into user_roles (user_id, role_id) select id, ? from users where id not in (select user_id from user_roles)",
+                (user_role["id"],),
+            )
 
         existing_models = conn.execute("select 1 from model_engines limit 1").fetchone()
         if not existing_models:
@@ -294,9 +334,6 @@ def seed_admin_data():
                 ),
             )
 
-        user_role = conn.execute(
-            "select id from roles where code='user'"
-        ).fetchone()
         if user_role:
             conn.execute(
                 "update users set role_id=? where role_id is null or role_id=0",

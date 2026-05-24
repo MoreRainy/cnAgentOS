@@ -15,6 +15,12 @@ class RoleRepository:
         name: str, code: str, description: str = "", is_system: int = 0
     ) -> int:
         with get_connection() as conn:
+            exists = conn.execute(
+                "select 1 from roles where code=? or name=?",
+                (code, name),
+            ).fetchone()
+            if exists:
+                raise ValueError("role exists")
             cursor = conn.execute(
                 "insert into roles (name, code, description, is_system) values (?, ?, ?, ?)",
                 (name, code, description, is_system),
@@ -62,6 +68,7 @@ class RoleRepository:
     def delete_role(role_id: int) -> bool:
         with get_connection() as conn:
             conn.execute("delete from role_permissions where role_id=?", (role_id,))
+            conn.execute("update users set role_id=null where role_id=?", (role_id,))
             conn.execute("delete from user_roles where role_id=?", (role_id,))
             conn.execute("delete from roles where id=? and is_system=0", (role_id,))
             return True
@@ -142,6 +149,39 @@ class AdminUserRepository:
         return row
 
     @staticmethod
+    def get_permissions_by_user_id(user_id: int) -> list:
+        with get_connection() as conn:
+            return conn.execute(
+                "select distinct p.id, p.name, p.code, p.category "
+                "from permissions p "
+                "inner join role_permissions rp on p.id=rp.permission_id "
+                "inner join users u on rp.role_id=u.role_id "
+                "where u.id=? "
+                "order by p.category, p.id",
+                (user_id,),
+            ).fetchall()
+
+    @staticmethod
+    def user_has_permission(user_id: int, permission_code: str) -> bool:
+        with get_connection() as conn:
+            row = conn.execute(
+                "select 1 "
+                "from permissions p "
+                "inner join role_permissions rp on p.id=rp.permission_id "
+                "inner join users u on rp.role_id=u.role_id "
+                "where u.id=? and p.code=? "
+                "limit 1",
+                (user_id, permission_code),
+            ).fetchone()
+            if row:
+                return True
+            super_admin = conn.execute(
+                "select 1 from users u join roles r on u.role_id=r.id where u.id=? and r.code='super_admin'",
+                (user_id,),
+            ).fetchone()
+            return bool(super_admin)
+
+    @staticmethod
     def get_admin_list(page: int = 1, page_size: int = 20, keyword: str = "") -> dict:
         offset = (page - 1) * page_size
         params = []
@@ -157,13 +197,12 @@ class AdminUserRepository:
 
             rows = conn.execute(
                 f"""select u.id, u.username, u.created_at,
-                   group_concat(r.name, ',') as role_names,
-                   group_concat(r.code, ',') as role_codes
+                   r.name as role_name,
+                   r.code as role_code
                    from users u
-                   left join user_roles ur on u.id=ur.user_id
-                   left join roles r on ur.role_id=r.id
+                   left join roles r on u.role_id=r.id
                    {where}
-                   group by u.id order by u.id limit ? offset ?""",
+                   order by u.id limit ? offset ?""",
                 params + [page_size, offset],
             ).fetchall()
 
@@ -173,8 +212,8 @@ class AdminUserRepository:
                 {
                     "id": row["id"],
                     "username": row["username"],
-                    "role_names": row["role_names"] or "未分配",
-                    "role_codes": row["role_codes"] or "",
+                    "role_names": row["role_name"] or "未分配",
+                    "role_codes": row["role_code"] or "",
                     "created_at": row["created_at"],
                 }
             )
@@ -240,28 +279,49 @@ class AdminUserRepository:
             return True
 
     @staticmethod
-    def set_user_roles(user_id: int, role_ids: list) -> bool:
+    def set_user_role(user_id: int, role_id: int) -> bool:
         with get_connection() as conn:
             is_sys = conn.execute(
-                "select 1 from user_roles ur join roles r on ur.role_id=r.id "
-                "where ur.user_id=? and r.code='super_admin'",
+                "select 1 from users u join roles r on u.role_id=r.id where u.id=? and r.code='super_admin'",
                 (user_id,),
             ).fetchone()
             if is_sys:
                 return False
+            exists = conn.execute("select 1 from roles where id=?", (role_id,)).fetchone()
+            if not exists:
+                return False
+            conn.execute("update users set role_id=? where id=?", (role_id, user_id))
             conn.execute("delete from user_roles where user_id=?", (user_id,))
-            for rid in role_ids:
-                conn.execute(
-                    "insert or ignore into user_roles (user_id, role_id) values (?, ?)",
-                    (user_id, rid),
-                )
+            conn.execute(
+                "insert or ignore into user_roles (user_id, role_id) values (?, ?)",
+                (user_id, role_id),
+            )
             return True
+
+    @staticmethod
+    def set_user_roles(user_id: int, role_ids: list) -> bool:
+        role_id = role_ids[0] if role_ids else None
+        if role_id is None:
+            return False
+        return AdminUserRepository.set_user_role(user_id, int(role_id))
 
     @staticmethod
     def get_user_roles(user_id: int) -> list:
         with get_connection() as conn:
-            return conn.execute(
-                "select r.id, r.name, r.code from roles r "
-                "inner join user_roles ur on r.id=ur.role_id where ur.user_id=?",
+            row = conn.execute(
+                "select r.id, r.name, r.code from users u left join roles r on u.role_id=r.id where u.id=?",
                 (user_id,),
-            ).fetchall()
+            ).fetchone()
+            return [row] if row and row["id"] else []
+
+    @staticmethod
+    def is_super_admin(username: str) -> bool:
+        with get_connection() as conn:
+            row = conn.execute(
+                """SELECT 1 FROM users u
+                   JOIN user_roles ur ON u.id = ur.user_id
+                   JOIN roles r ON ur.role_id = r.id
+                   WHERE u.username = ? AND r.code = 'super_admin'""",
+                (username,)
+            ).fetchone()
+            return row is not None

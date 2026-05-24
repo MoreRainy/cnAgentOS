@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>无权限访问 - cnAgentOS</title>
+    <link rel="stylesheet" href="{{static_url('dist/layui/css/layui.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/base.css')}}">
+    <style>
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+        }
+        .forbidden-card {
+            width: min(560px, 100%);
+            padding: 34px 30px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+            text-align: center;
+        }
+        .forbidden-icon {
+            width: 84px;
+            height: 84px;
+            margin: 0 auto 18px;
+            border-radius: 24px;
+            display: grid;
+            place-items: center;
+            background: rgba(220, 38, 38, 0.08);
+            color: #dc2626;
+            font-size: 34px;
+        }
+        .forbidden-title { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 10px; }
+        .forbidden-desc { color: #64748b; line-height: 1.8; margin-bottom: 24px; }
+        .forbidden-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .forbidden-actions .layui-btn { border-radius: 12px; }
+        .forbidden-tip {
+            margin-top: 18px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(37, 99, 235, 0.08);
+            color: #1d4ed8;
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="forbidden-card">
+        <div class="forbidden-icon"><i class="layui-icon layui-icon-password"></i></div>
+        <div class="forbidden-title">当前账号无权限访问此页面</div>
+        <div class="forbidden-desc">
+            你尝试访问的功能受角色权限控制，当前账号没有对应权限。
+            如果你认为这是误判，请联系管理员为你的账号分配正确角色。
+        </div>
+        <div class="forbidden-actions">
+            <a class="layui-btn layui-btn-normal" href="javascript:history.back()">返回上一页</a>
+            <a class="layui-btn layui-btn-primary" href="/">返回首页</a>
+        </div>
+        {% if required_permission %}
+        <div class="forbidden-tip">
+            需要的权限标识：<code>{{ required_permission }}</code>
+        </div>
+        {% end %}
+    </div>
+</body>
+</html>

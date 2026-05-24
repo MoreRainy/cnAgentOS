@@ -143,6 +143,21 @@
             jump: function (obj, first) { if (!first) window.location.href = '/admin/models?page=' + obj.curr; }
         });
 
+        $.ajaxSetup({
+            beforeSend: function (jqXHR, settings) {
+                if (settings.type === 'POST' || settings.type === 'PUT' || settings.type === 'DELETE') {
+                    jqXHR.setRequestHeader('X-XSRFToken', getCookie('_xsrf'));
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 403) {
+                    var msg = '无权限执行该操作';
+                    try { var res = JSON.parse(xhr.responseText || '{}'); msg = res.msg || msg; } catch (e) {}
+                    layer.msg(msg, { icon: 2 });
+                }
+            }
+        });
+
         function openEditor(mode, data) {
             data = data || {};
             var html = '<form class="layui-form form-wrap" id="modelForm">' +

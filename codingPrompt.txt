@@ -12,9 +12,9 @@ admin/admin888）
 任务二：
 继续后端-管理侧功能模块的开发
 -功能管理：将菜单侧功能化，实现动态管理所有功能模块
-权限管理：功能与角色的映射关系模块，允许新增/修改/删除权限，采用二级联动的方式实现。
-角色管理：默认超级管理员角色（不能修改和删除），允许新增角色，采用二级联动的方式实现。
-开发限制：
+-权限管理：功能与角色的映射关系模块，允许新增/修改/删除权限，采用二级联动的方式实现。
+-角色管理：默认超级管理员角色（不能修改和删除），允许新增角色，采用二级联动的方式实现。
+-开发限制：
 ·遵循前置任务开发成果及要求完成功能模块的实现，保证开发的一致性。
 
 任务三:
@@ -29,8 +29,8 @@ admin/admin888）
 - 模型引擎：
 -实现以橱窗列表的页面风格，
 -实现动态新增/修改/删除模型服务，
-支持可视化配置满足openai-api范式的模型接入及接口调用服务，
-支持模型token统计（可视化），支持分页一行3列，6条数据为一列，由于设计到AI大模型，风格可以炫酷、高级感强，
+-支持可视化配置满足openai-api范式的模型接入及接口调用服务，
+-支持模型token统计（可视化），支持分页一行3列，6条数据为一列，由于设计到AI大模型，风格可以炫酷、高级感强，
 -支持对新增的模型进行对话测试功能，
 -支持设置模型为系统模式（如果为默认，则全局优先调用该模型）
 -模型响应支持SSE(流式响应)
@@ -49,3 +49,99 @@ print(response.choices[O].message.content)
 
 以下为APIkey:
 apikey=sk-aigc-e501822e1a980302a16c52e514ad19dbd25d636b
+
+
+任务五：
+继续后端-管理侧功能模块的开发
+-瞭望管理：这是一个通过大模型+AI实现的智能数据采集模块，支持新增暸望数据源管理和采集功能，以下为具体功能需求或要求：
+-瞭望数据源管理：该功能是一个动态可视化规则配置功能，支持新增/删除/修改采集源的规则，我这里给你提供一个采集源，你通过分析实现动态管理，如下：
+’‘’
+百度新闻采集源：
+1.采集入口url：
+https://www.baidu.com/s?ie=utf-8&bsst=1&rsv_dl=news_t_sk&tn=news&cl=2&medium=0&rtt=1&wd={关键字}
+https://www.baidu.com/s?ie=utf-8&bsst=1&rsv_dl=news_b_pn&tn=news&cl=2&medium=0&rtt=1&wd={关键词}&pn={分页步进，默认0=第一页，10=第二页，20等于第三页}
+2.采集requestheader：
+GET /s?ie=utf-8&bsst=1&rsv_dl=news_t_sk&tn=news&cl=2&medium=0&rtt=1&wd=%E5%9B%9B%E5%B7%9D%E5%86%9C%E4%B8%9A%E5%A4%A7%E5%AD%A6 HTTP/1.1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+Cache-Control: no-cache
+Connection: keep-alive
+Cookie: BAIDUID=BDE1B8A4EFE43CC4DFF32E4F56A0A79F:FG=1; BAIDUID_BFESS=BDE1B8A4EFE43CC4DFF32E4F56A0A79F:FG=1; BAIDU_WISE_UID=wapp_1761750153678_226; ZFY=qhiLLmBxgpW6QuKGD6SqHLKPn6HdSyOUX9UD:AGmB6DE:C; __bid_n=19b6ee660b94384aae302c; BDUSS=nNKT1BiMlB-cFJaZms5bmMwNEE0S1VvQ0hzRko5VEF0OEljMWRxei1abGVjdk5wSVFBQUFBJCQAAAAAAAAAAAEAAAACjMZn1sHX8MSnwfq7ygAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF7ly2le5ctpd; BDUSS_BFESS=nNKT1BiMlB-cFJaZms5bmMwNEE0S1VvQ0hzRko5VEF0OEljMWRxei1abGVjdk5wSVFBQUFBJCQAAAAAAAAAAAEAAAACjMZn1sHX8MSnwfq7ygAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF7ly2le5ctpd; BIDUPSID=BDE1B8A4EFE43CC4DFF32E4F56A0A79F; PSTM=1779546017; BDRCVFR[C0p6oIjvx-c]=mbxnW11j9Dfmh7GuZR8mvqV; H_PS_PSSID=63145_67721_67861_68736_69003_69196_69294_69586_69767_69845_69906_69899_69961_70006_69999_70012_70046_70097_70036_70101_70130_70143_70158_70230_70266_70184_70215_70257_70208_70283_70322_70142_69924_70357_70436_70417_70462_70476_70471_70479; delPer=0; BD_CK_SAM=1; PSINO=7; _tea_utm_cache_10000007=undefined; arialoadData=false; BDSVRTM=551
+Host: www.baidu.com
+Pragma: no-cache
+Referer: https://www.baidu.com/s?ie=utf-8&bsst=1&rsv_dl=news_t_sk&tn=news&cl=2&medium=0&rtt=1&wd=%E5%9B%9B%E5%B7%9D%E5%86%9C%E4%B8%9A%E5%A4%A7%E5%AD%A6
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0
+sec-ch-ua: "Chromium";v="148", "Microsoft Edge";v="148", "Not/A)Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Windows"
+‘’‘
+根据以上采集源，你需要开发一套可动态接收参数的功能模块，以提供后续批量采集功能时调用。
+--瞭望采集：开发一个类似搜索引擎的界面，输入框下方提供采集源的动态选择功能（开关样式），该界面要求独立设计风格，不与layui风格同步，炫酷，好看，用户交互体验简单，另外在采集源的选择面板下，提供参数配置：一次有效采集数量和页数（与URL中的参数同步）
+-- 瞭望采集到的数据，保存到sqlite数据库表中
+--数据仓库：以列表显示通过瞭望采集到的数据，一页20条分页，功能：
+--删除/批量删除
+-- AI深度采集（后续单独任务完成）
+
+任务六
+接口地址: https://api.52vmy.cn/api/music/wy/rand
+返回格式: JSON
+请求方式: GET
+请求示例: https://api.52vmy.cn/api/music/wy/rand
+接口定制: 点此加入用户群
+默认QPS: 每2秒最多4次 携带Token可无视限制
+接口备注：点击前往三日天气API
+'''
+接口响应示例
+{
+  "code": 200,
+  "msg": "成功",
+  "data": {
+    "song": "悬溺",
+    "singer": "葛东琪",
+    "cover": "http://p1.music.126.net/CDhYcShQKH2VAMENuCxWWQ==/109951164166513349.jpg",
+    "Music": "http://music.163.com/song/media/outer/url?id=1397345903",
+    "id": 1397345903
+  }
+}
+'''
+开发限制：
+- 遵循前置任务开发成果及要求完成功能模块的实现，保证开发的一致性。
+
+任务六 - 1：新增接口数据
+将以下数据新增到数据库接口管理对应的表中：
+接口 1：音乐 API
+接口地址：https://api.52vmy.cn/api/music/wy/rand
+返回格式：JSON
+请求方式：GET
+请求示例：https://api.52vmy.cn/api/music/wy/rand
+默认 QPS：每 2 秒最多 4 次，携带 Token 可无视限制
+接口 2：天气 API
+接口地址：https://api.52vmy.cn/api/query/tian
+返回格式：JSON
+请求方式：GET
+请求示例：https://api.52vmy.cn/api/query/tian?city=北京市
+默认 QPS：每 2 秒最多 4 次，携带 Token 可无视限制
+接口备注：点击前往三日天气 API
+
+
+
+任务七:
+继续后端 - 管理侧功能模块的开发:
+数字员工：该模块是基于大模型服务 + 接口管理中的 API 服务完成一个综合业务管理功能，主要目的是实现用户侧可以通过 @xxx 调用后台数字员工中的相关服务，如:
+'''
+@川小农：请数字员工主要是通过模型引擎中的默认模型 + 提示词（prompt）实现智能对话，模型根据提示词及用户的问题，响应 (sse) 结果。“川小农”是该数字员工的别名，该名称需要动态管理和可配置，后台配置后，前台同步用新的别名才能与该数字员工进行对话。
+@天气：该数字员工主要是通过接口管理中的 API 服务，提供天气响应数据。
+@音乐：该数字员工主要是通过接口管理中的 API 服务，提供音乐响应数据。
+'''
+开发限制:
+- 遵循前置任务开发成果及要求完成功能模块的实现，保证开发的一致性。
+任务七:
+继续后端 - 管理侧功能模块的开发:
+开发限制:
+- 遵循前置任务开发成果及要求完成功能模块的实现，保证开发的一致性。
