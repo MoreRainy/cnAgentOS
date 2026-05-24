@@ -1,44 +1,46 @@
 {% extends 'base.html' %}
 {% block body %}
-<div class="layui-container" style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-    <div class="layui-card" style="width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
-        <div class="layui-card-header" style="text-align: center; font-size: 20px; font-weight: bold; padding: 20px;">
-            <i class="fa fa-robot" style="color: #667eea;"></i> cnAgentOS 智能问数系统
-        </div>
-        <div class="layui-card-body" style="padding: 30px;">
-            {% if error %}
-            <div class="layui-alert layui-alert-danger" style="margin-bottom: 20px;">
-                <i class="fa fa-exclamation-circle"></i> {{ error }}
+<div class="page-shell auth-shell auth-light-shell">
+    <div class="auth-background auth-light-background"></div>
+    <div class="auth-panel glass-card auth-light-panel">
+        <div class="auth-brand">
+            <div class="auth-logo"><i class="fa fa-robot"></i></div>
+            <div>
+                <div class="auth-title">cnAgentOS 智能问数系统</div>
+                <div class="auth-subtitle">企业级管理后台 · 安全登录入口</div>
             </div>
-            {% end %}
-            <form class="layui-form" action="/auth/login" method="post" lay-filter="loginForm">
-                <div class="layui-form-item">
-                    <label class="layui-form-label"><i class="fa fa-user"></i></label>
-                    <div class="layui-input-block">
-                        <input type="text" name="username" placeholder="请输入用户名" autocomplete="off"
-                               class="layui-input" lay-verify="required" value="admin">
-                    </div>
-                </div>
-                <div class="layui-form-item">
-                    <label class="layui-form-label"><i class="fa fa-lock"></i></label>
-                    <div class="layui-input-block">
-                        <input type="password" name="password" placeholder="请输入密码" autocomplete="off"
-                               class="layui-input" lay-verify="required" value="123456">
-                    </div>
-                </div>
-                <div class="layui-form-item">
-                    <div class="layui-input-block">
-                        <button class="layui-btn layui-btn-fluid layui-btn-normal" lay-submit lay-filter="loginBtn">
-                            <i class="fa fa-sign-in"></i> 登 录
-                        </button>
-                    </div>
-                </div>
-                <div style="text-align: center; color: #999; font-size: 13px;">
-                    还没有账号？<a href="/auth/register" style="color: #667eea;">立即注册</a>
-                </div>
-                {% module xsrf_form_html() %}
-            </form>
         </div>
+        <div class="auth-card-title">管理员登录</div>
+        {% if error %}
+        <div class="layui-alert layui-alert-danger auth-alert">
+            <i class="fa fa-exclamation-circle"></i> {{ error }}
+        </div>
+        {% end %}
+        <form class="layui-form auth-form" action="/auth/login" method="post" lay-filter="loginForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label"><i class="fa fa-user"></i></label>
+                <div class="layui-input-block">
+                    <input type="text" name="username" placeholder="请输入用户名" autocomplete="off"
+                           class="layui-input auth-input" lay-verify="required" value="admin">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label"><i class="fa fa-lock"></i></label>
+                <div class="layui-input-block">
+                    <input type="password" name="password" placeholder="请输入密码" autocomplete="off"
+                           class="layui-input auth-input" lay-verify="required" value="admin888">
+                </div>
+            </div>
+            <div class="layui-form-item auth-actions">
+                <button class="layui-btn layui-btn-fluid layui-btn-normal auth-submit" lay-submit lay-filter="loginBtn">
+                    <i class="fa fa-sign-in-alt"></i> 登 录
+                </button>
+            </div>
+            <div class="auth-footer">
+                <span>还没有账号？</span><a href="/auth/register">立即注册</a>
+            </div>
+            {% module xsrf_form_html() %}
+        </form>
     </div>
 </div>
 {% end %}

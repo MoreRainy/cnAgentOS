@@ -5,24 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}} - cnAgentOS</title>
     <link rel="stylesheet" href="{{static_url('dist/layui/css/layui.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/base.css')}}">
     <style>
-        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-        .admin-layout { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
-        .admin-header { height: 56px; background: linear-gradient(135deg, #1a1a2e, #16213e); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000; }
-        .admin-header .logo { color: #fff; font-size: 18px; font-weight: 600; letter-spacing: 1px; }
-        .admin-header .logo i { margin-right: 8px; }
+        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+        .admin-layout { display: flex; flex-direction: column; height: 100vh; width: 100vw; background: transparent; }
+        .admin-header { height: 64px; background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(16px); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; border-bottom: 1px solid rgba(148, 163, 184, 0.18); box-shadow: 0 8px 30px rgba(15,23,42,0.08); z-index: 1000; }
+        .admin-header .logo { color: #0f172a; font-size: 18px; font-weight: 700; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+        .admin-header .logo i { color: #2563eb; }
         .admin-header .user-info { display: flex; align-items: center; gap: 12px; }
-        .admin-header .user-info span { color: rgba(255,255,255,0.85); font-size: 14px; }
-        .admin-header .btn-logout { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .admin-header .btn-logout:hover { background: rgba(255,255,255,0.2); }
+        .admin-header .user-info span { color: #334155; font-size: 14px; }
+        .admin-header .btn-logout { background: linear-gradient(135deg, #2563eb, #3b82f6); color: #fff; border: none; padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 12px; transition: all 0.2s ease; box-shadow: 0 10px 18px rgba(37,99,235,0.18); }
+        .admin-header .btn-logout:hover { transform: translateY(-1px); box-shadow: 0 12px 22px rgba(37,99,235,0.25); }
         .admin-body { display: flex; flex: 1; overflow: hidden; }
-        .admin-sidebar { width: 220px; background: #fff; border-right: 1px solid #e6e6e6; overflow-y: auto; padding: 12px 0; flex-shrink: 0; }
-        .admin-sidebar .menu-item { display: flex; align-items: center; padding: 12px 20px; color: #334155; font-size: 14px; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
-        .admin-sidebar .menu-item:hover { background: #f1f5f9; color: #0f3460; border-left-color: #0f3460; }
-        .admin-sidebar .menu-item.active { background: #e8f0fe; color: #0f3460; border-left-color: #0f3460; font-weight: 500; }
-        .admin-sidebar .menu-item i { margin-right: 10px; font-size: 18px; }
-        .admin-workspace { flex: 1; background: #f5f7fa; overflow: hidden; position: relative; }
-        .admin-workspace iframe { width: 100%; height: 100%; border: none; display: block; }
+        .admin-sidebar { width: 240px; background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(12px); border-right: 1px solid rgba(148, 163, 184, 0.18); overflow-y: auto; padding: 14px 0; flex-shrink: 0; }
+        .admin-sidebar .menu-item { display: flex; align-items: center; padding: 14px 22px; color: #475569; font-size: 14px; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
+        .admin-sidebar .menu-item:hover { background: rgba(37, 99, 235, 0.08); color: #0f172a; border-left-color: #2563eb; }
+        .admin-sidebar .menu-item.active { background: rgba(37, 99, 235, 0.12); color: #0f172a; border-left-color: #2563eb; font-weight: 600; }
+        .admin-sidebar .menu-item i { margin-right: 10px; font-size: 18px; color: #2563eb; }
+        .admin-workspace { flex: 1; background: transparent; overflow: hidden; position: relative; }
+        .admin-workspace iframe { width: 100%; height: 100%; border: none; display: block; background: transparent; }
     </style>
 </head>
 <body>

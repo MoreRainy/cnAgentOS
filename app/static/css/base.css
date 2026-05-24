@@ -4,28 +4,233 @@
     box-sizing: border-box;
 }
 
+:root {
+    --bg: #f5f7fb;
+    --bg-soft: #ffffff;
+    --card: rgba(255, 255, 255, 0.88);
+    --card-border: rgba(15, 23, 42, 0.08);
+    --text: #0f172a;
+    --muted: #64748b;
+    --primary: #2563eb;
+    --primary-strong: #1d4ed8;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+}
+
 html,
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     height: 100%;
     width: 100%;
-    background: #f5f7fa;
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 24%),
+        linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+    color: var(--text);
+}
+
+body {
+    min-height: 100vh;
+}
+
+body .layui-input,
+body .layui-textarea,
+body .layui-select,
+body .layui-form-select .layui-input {
+    border-radius: 12px;
+    border-color: rgba(148, 163, 184, 0.26);
+    background: #fff;
+}
+
+body .layui-btn {
+    border-radius: 12px;
+    font-weight: 600;
 }
 
 .layui-alert {
-    padding: 10px 15px;
-    border-radius: 6px;
+    padding: 12px 16px;
+    border-radius: 12px;
     font-size: 14px;
+    backdrop-filter: blur(10px);
 }
 
 .layui-alert-danger {
-    background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
+    background: rgba(220, 38, 38, 0.08);
+    color: #991b1b;
+    border: 1px solid rgba(220, 38, 38, 0.18);
 }
 
 .layui-alert-success {
-    background: #f0fdf4;
-    color: #16a34a;
-    border: 1px solid #bbf7d0;
+    background: rgba(22, 163, 74, 0.08);
+    color: #166534;
+    border: 1px solid rgba(22, 163, 74, 0.18);
+}
+
+.page-shell {
+    min-height: 100vh;
+    padding: 24px;
+}
+
+.glass-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+}
+
+.app-backdrop {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 12% 18%, rgba(37, 99, 235, 0.10), transparent 28%),
+        radial-gradient(circle at 88% 14%, rgba(16, 185, 129, 0.08), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(99, 102, 241, 0.08), transparent 30%);
+    z-index: -1;
+}
+
+.auth-shell {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.auth-background {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.12), transparent 26%);
+    filter: blur(8px);
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+.auth-background.auth-light-background {
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.10), transparent 26%);
+}
+
+.auth-background.auth-register-background {
+    background:
+        radial-gradient(circle at top right, rgba(236, 72, 153, 0.08), transparent 26%),
+        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.12), transparent 30%);
+}
+
+.auth-panel {
+    position: relative;
+    width: min(460px, calc(100vw - 32px));
+    border-radius: 24px;
+    padding: 28px;
+    z-index: 1;
+}
+
+.auth-light-panel {
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.auth-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
+    color: #fff;
+    font-size: 22px;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.24);
+}
+
+.auth-logo.auth-logo-alt {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+}
+
+.auth-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.auth-subtitle {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.auth-card-title {
+    margin: 10px 0 16px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.auth-alert {
+    margin-bottom: 16px;
+}
+
+.auth-form .layui-form-item {
+    margin-bottom: 16px;
+}
+
+.auth-form .layui-form-label {
+    width: 54px;
+    padding: 11px 0;
+    color: #64748b;
+}
+
+.auth-form .layui-input-block {
+    margin-left: 66px;
+}
+
+.auth-input {
+    height: 46px;
+    line-height: 46px;
+    padding-left: 14px;
+}
+
+.auth-actions {
+    margin-top: 8px;
+}
+
+.auth-submit {
+    height: 46px;
+    line-height: 46px;
+    font-size: 15px;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+}
+
+.auth-footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.auth-footer a,
+.auth-success-link {
+    color: #2563eb;
+    font-weight: 700;
+}
+
+.auth-tip {
+    margin: 2px 0 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    color: #1d4ed8;
+    background: rgba(37, 99, 235, 0.08);
+    border: 1px solid rgba(37, 99, 235, 0.12);
+    font-size: 13px;
+    line-height: 1.6;
 }
