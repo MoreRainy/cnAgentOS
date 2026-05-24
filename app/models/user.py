@@ -5,6 +5,9 @@ import sqlite3
 from app.models.db import get_connection
 
 
+DEFAULT_ROLE_CODE = "user"
+
+
 # 密码加密方法
 def _hash_password(password: str, salt: bytes) -> str:
     dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
@@ -22,10 +25,21 @@ class UserRepository:
 
         try:
             with get_connection() as conn:
-                conn.execute(
+                cursor = conn.execute(
                     "insert into users (username,password_hash,salt) values (?,?,?)",
                     (username, password_hash, salt.hex()),
                 )
+                user_id = cursor.lastrowid
+
+                role_row = conn.execute(
+                    "select id from roles where code=?",
+                    (DEFAULT_ROLE_CODE,),
+                ).fetchone()
+                if role_row:
+                    conn.execute(
+                        "insert or ignore into user_roles (user_id, role_id) values (?, ?)",
+                        (user_id, role_row["id"]),
+                    )
             return True
         except sqlite3.IntegrityError:
             return False

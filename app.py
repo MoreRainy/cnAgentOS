@@ -26,11 +26,14 @@ from app.controllers.admin import (
     AdminMenuPageHandler,
     AdminRolePageHandler,
     AdminPermPageHandler,
+    AdminModelPageHandler,
     AdminPlaceholderHandler,
     AdminUserApiHandler,
     AdminRoleApiHandler,
     AdminPermApiHandler,
     AdminMenuApiHandler,
+    AdminModelApiHandler,
+    AdminModelTestApiHandler,
 )
 from app.models.db import init_db, seed_admin_data
 
@@ -64,10 +67,13 @@ def make_app():
             (r"/admin/menus", AdminMenuPageHandler),
             (r"/admin/roles", AdminRolePageHandler),
             (r"/admin/permissions", AdminPermPageHandler),
+            (r"/admin/models", AdminModelPageHandler),
             (r"/admin/api/users", AdminUserApiHandler),
             (r"/admin/api/roles", AdminRoleApiHandler),
             (r"/admin/api/permissions", AdminPermApiHandler),
             (r"/admin/api/menus", AdminMenuApiHandler),
+            (r"/admin/api/models", AdminModelApiHandler),
+            (r"/admin/api/models/test", AdminModelTestApiHandler),
             (r"/admin/(\w+)", AdminPlaceholderHandler),
             (r"/", IndexHandler),
         ],
@@ -80,9 +86,6 @@ if __name__ == "__main__":
     seed_admin_data()
     app = make_app()
     server = HTTPServer(app)
-    server.bind(10086)
-    # 自动cpu核心数
-    server.start()
-
-    print("=============server started============= 端口:10086======", flush=True)
+    server.listen(10086)
+    print(f"======== server started on http://127.0.0.1:10086 ========", flush=True)
     tornado.ioloop.IOLoop.current().start()

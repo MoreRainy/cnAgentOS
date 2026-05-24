@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>模型引擎管理</title>
+    <link rel="stylesheet" href="{{static_url('dist/layui/css/layui.css')}}">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        .model-card {
+            transition: all 0.3s;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .model-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .model-card .layui-card-header {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .model-card .layui-card-body p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .model-card .layui-badge-dot {
+            top: 12px;
+            right: 12px;
+        }
+
+        .default-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #1677ff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layui-fluid">
+        <div class="layui-card">
+            <div class="layui-card-header">
+                模型引擎管理
+                <button class="layui-btn layui-btn-sm layui-btn-primary fr" id="add-model-btn">新增模型</button>
+            </div>
+            <div class="layui-card-body">
+                <div class="layui-row layui-col-space15">
+                    {% for model in models %}
+                    <div class="layui-col-md4">
+                        <div class="layui-card model-card">
+                            <div class="layui-card-header">{{ model['model_name'] }}
+                                {% if model['is_default'] %}
+                                <span class="default-tag">默认</span>
+                                {% end %}
+                            </div>
+                            <div class="layui-card-body">
+                                <p><strong>Base URL:</strong> {{ model['base_url'] }}</p>
+                                <p><strong>Token Count:</strong> <span class="layui-badge layui-bg-blue">{{
+                                        model['token_count'] }}</span></p>
+                                <hr>
+                                <div class="layui-btn-group">
+                                    <button class="layui-btn layui-btn-sm layui-btn-primary edit-btn"
+                                        data-id="{{ model['id'] }}" data-name="{{ model['model_name'] }}"
+                                        data-api-key="{{ model['api_key'] }}"
+                                        data-base-url="{{ model['base_url'] }}">编辑</button>
+                                    <button class="layui-btn layui-btn-sm layui-btn-danger delete-btn"
+                                        data-id="{{ model['id'] }}">删除</button>
+                                    <button class="layui-btn layui-btn-sm set-default-btn" data-id="{{ model['id'] }}" {% if model['is_default'] %}disabled{% end %}>设为默认</button>
+                                    <button class="layui-btn layui-btn-sm layui-btn-warm test-btn"
+                                        data-id="{{ model['id'] }}">测试</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% end %}
+                </div>
+                <div id="pagination" style="text-align: center; margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Form -->
+    <div id="model-form" style="display: none; padding: 20px;">
+        <form class="layui-form" lay-filter="model-form" action="/admin/model_engine" method="post">
+            <input type="hidden" name="action" id="form-action">
+            <input type="hidden" name="id" id="form-id">
+            {% module xsrf_form_html() %}
+            <div class="layui-form-item">
+                <label class="layui-form-label">模型名称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="model_name" id="form-model-name" required lay-verify="required"
+                        placeholder="例如：deepseek-v3" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">API Key</label>
+                <div class="layui-input-block">
+                    <input type="text" name="api_key" id="form-api-key" required lay-verify="required"
+                        placeholder="请输入API Key" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">Base URL</label>
+                <div class="layui-input-block">
+                    <input type="text" name="base_url" id="form-base-url" required lay-verify="required"
+                        placeholder="例如：https://aigc-api.aitoolcore.com/api/v1" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit lay-filter="form-submit">立即提交</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="{{static_url('dist/layui/layui.js')}}"></script>
+    <script>
+        layui.use(['layer', 'form', 'laypage'], function () {
+            var layer = layui.layer;
+            var form = layui.form;
+            var laypage = layui.laypage;
+            var $ = layui.$;
+
+            // Pagination
+            laypage.render({
+                elem: 'pagination',
+                count: parseInt('{{ total_records }}') || 0,
+                limit: 6,
+                curr: parseInt('{{ current_page }}') || 1,
+                jump: function (obj, first) {
+                    if (!first) {
+                        window.location.href = '/admin/model_engine?page=' + obj.curr;
+                    }
+                }
+            });
+
+            // Add Model
+            $('#add-model-btn').on('click', function () {
+                $('#form-action').val('add');
+                $('#form-id').val('');
+                form.val('model-form', {
+                    "model_name": "",
+                    "api_key": "",
+                    "base_url": ""
+                });
+                layer.open({
+                    type: 1,
+                    title: '新增模型',
+                    content: $('#model-form'),
+                    area: ['500px', 'auto']
+                });
+            });
+
+            // Edit Model
+            $('.edit-btn').on('click', function () {
+                var data = $(this).data();
+                $('#form-action').val('edit');
+                form.val('model-form', {
+                    "id": data.id,
+                    "model_name": data.name,
+                    "api_key": data.apiKey,
+                    "base_url": data.baseUrl
+                });
+                layer.open({
+                    type: 1,
+                    title: '编辑模型',
+                    content: $('#model-form'),
+                    area: ['500px', 'auto']
+                });
+            });
+
+            // Delete Model
+            $('.delete-btn').on('click', function () {
+                var id = $(this).data('id');
+                layer.confirm('确定删除此模型吗？', function (index) {
+                    $.post('/admin/model_engine', { action: 'delete', id: id, _xsrf: getCookie("_xsrf") }, function (res) {
+                        if (res.status === 'success') {
+                            layer.msg('删除成功', { icon: 1 });
+                            location.reload();
+                        } else {
+                            layer.msg('删除失败', { icon: 2 });
+                        }
+                    });
+                    layer.close(index);
+                });
+            });
+
+            // Set Default Model
+            $('.set-default-btn').on('click', function () {
+                var id = $(this).data('id');
+                $.post('/admin/model_engine', { action: 'set_default', id: id, _xsrf: getCookie("_xsrf") }, function (res) {
+                    if (res.status === 'success') {
+                        layer.msg('设置成功', { icon: 1 });
+                        location.reload();
+                    } else {
+                        layer.msg('设置失败', { icon: 2 });
+                    }
+                });
+            });
+
+            function getCookie(name) {
+                var r = document.cookie.match("\b" + name + "=([^;]*)\b");
+                return r ? r[1] : undefined;
+            }
+
+            // Test Model
+            $(".test-btn").on("click", function () {
+                var id = $(this).data("id");
+                layer.open({
+                    type: 1,
+                    title: "模型对话测试",
+                    area: ["600px", "400px"],
+                    content: '<div style="padding: 15px;"><div id="test-output" style="height: 250px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-radius: 4px;"></div><input id="test-prompt" class="layui-input" placeholder="请输入您的问题..."><button id="send-test-prompt" class="layui-btn" style="margin-top: 10px;">发送</button></div>',
+                    success: function (layero, index) {
+                        $("#send-test-prompt").on("click", function () {
+                            var prompt = $("#test-prompt").val();
+                            if (!prompt) {
+                                layer.msg("请输入问题", { icon: 2 });
+                                return;
+                            }
+
+                            var outputDiv = $("#test-output");
+                            outputDiv.append("<div><strong>You:</strong> " + prompt + "</div>");
+                            outputDiv.append("<div><strong>Assistant:</strong> </div>");
+
+                            var url = "/admin/api/models/test?id=" + id + "&prompt=" + encodeURIComponent(prompt) + "&_xsrf=" + getCookie("_xsrf");
+                            var es = new EventSource(url);
+
+                            es.onmessage = function (e) {
+                                if (e.data == "[DONE]") {
+                                    es.close();
+                                    location.reload(); // Reload to update token count
+                                    return;
+                                }
+                                var data = JSON.parse(e.data);
+                                if (data.error) {
+                                    outputDiv.children().last().append("<span style='color: red;'>" + data.error + "</span>");
+                                    es.close();
+                                    return;
+                                }
+                                outputDiv.children().last().append(data.content);
+                                outputDiv.scrollTop(outputDiv[0].scrollHeight);
+                            };
+
+                            es.onerror = function (e) {
+                                outputDiv.children().last().append("<span style='color: red;'>Error occurred.</span>");
+                                es.close();
+                            };
+                        });
+                    },
+                });
+            });
+        });
+    </script>
+</body>
+</html>

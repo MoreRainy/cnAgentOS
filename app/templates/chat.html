@@ -26,13 +26,19 @@
                     <i class="fa fa-user-circle" style="font-size: 24px; color: #667eea; margin-right: 8px;"></i>
                     <span style="font-size: 14px;">{{ username }}</span> <!-- 显示当前用户名 -->
                 </div>
-                <!-- 退出登录表单，带防跨站请求伪造校验 -->
-                <form action="/auth/logout" method="post" style="display: inline;">
-                    {% module xsrf_form_html() %}
-                    <button type="submit" class="layui-btn layui-btn-sm layui-btn-primary" style="padding: 0 8px;">
-                        <i class="fa fa-sign-out">退出</i>
-                    </button>
-                </form>
+                <div>
+                    <a href="/admin/login" class="layui-btn layui-btn-sm layui-btn-primary"
+                        style="padding: 0 8px; margin-right: 5px;">
+                        <i class="fa fa-cogs"></i> 管理
+                    </a>
+                    <!-- 退出登录表单，带防跨站请求伪造校验 -->
+                    <form action="/auth/logout" method="post" style="display: inline;">
+                        {% module xsrf_form_html() %}
+                        <button type="submit" class="layui-btn layui-btn-sm layui-btn-primary" style="padding: 0 8px;">
+                            <i class="fa fa-sign-out"></i> 退出
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

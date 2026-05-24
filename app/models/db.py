@@ -103,6 +103,31 @@ def init_db():
 
         conn.execute(
             """
+            CREATE TABLE IF NOT EXISTS model_engines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL DEFAULT('未命名模型'),
+                model_name TEXT NOT NULL,
+                api_key TEXT NOT NULL,
+                base_url TEXT NOT NULL,
+                is_default INTEGER DEFAULT 0,
+                token_count INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT(datetime('now','localtime'))
+            )
+        """
+        )
+
+        try:
+            conn.execute("ALTER TABLE model_engines ADD COLUMN name TEXT NOT NULL DEFAULT '未命名模型'")
+        except Exception:
+            pass
+
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN role_id INTEGER")
+        except Exception:
+            pass
+
+        conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS role_permissions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 role_id INTEGER NOT NULL,
@@ -129,6 +154,21 @@ def init_db():
         """
         )
 
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS ai_models (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                model_name TEXT NOT NULL,
+                base_url TEXT NOT NULL,
+                api_key TEXT NOT NULL,
+                is_default INTEGER DEFAULT 0,
+                total_tokens INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT(datetime('now','localtime'))
+            )
+        """
+        )
+
         conn.commit()
 
 
@@ -145,28 +185,39 @@ def seed_admin_data():
                 "insert into roles (name, code, description, is_system) values (?, ?, ?, ?)",
                 ("超级管理员", "super_admin", "系统内置超级管理员", 1),
             )
+        if not conn.execute("select 1 from roles where code='admin'").fetchone():
             conn.execute(
                 "insert into roles (name, code, description, is_system) values (?, ?, ?, ?)",
                 ("普通管理员", "admin", "普通管理员角色", 0),
             )
-            admin_exist = conn.execute(
-                "select 1 from users where username='admin'"
+        if not conn.execute("select 1 from roles where code='user'").fetchone():
+            conn.execute(
+                "insert into roles (name, code, description, is_system) values (?, ?, ?, ?)",
+                ("普通用户", "user", "系统默认普通用户角色", 0),
+            )
+
+        admin_exist = conn.execute(
+            "select 1 from users where username='admin'"
+        ).fetchone()
+        if not admin_exist:
+            password = "admin888"
+            salt = secrets.token_bytes(16)
+            dk = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), salt, 100000
+            )
+            password_hash = dk.hex()
+            cursor = conn.execute(
+                "insert into users (username, password_hash, salt) values (?, ?, ?)",
+                ("admin", password_hash, salt.hex()),
+            )
+            user_id = cursor.lastrowid
+            super_role = conn.execute(
+                "select id from roles where code='super_admin'"
             ).fetchone()
-            if not admin_exist:
-                password = "admin888"
-                salt = secrets.token_bytes(16)
-                dk = hashlib.pbkdf2_hmac(
-                    "sha256", password.encode("utf-8"), salt, 100000
-                )
-                password_hash = dk.hex()
-                cursor = conn.execute(
-                    "insert into users (username, password_hash, salt) values (?, ?, ?)",
-                    ("admin", password_hash, salt.hex()),
-                )
-                user_id = cursor.lastrowid
+            if super_role:
                 conn.execute(
-                    "insert into user_roles (user_id, role_id) values (?, ?)",
-                    (user_id, 1),
+                    "insert or ignore into user_roles (user_id, role_id) values (?, ?)",
+                    (user_id, super_role["id"]),
                 )
 
         existing_perms = conn.execute("select 1 from permissions limit 1").fetchone()
@@ -229,5 +280,31 @@ def seed_admin_data():
                         "insert or ignore into role_permissions (role_id, permission_id) values (?, ?)",
                         (super_role["id"], p["id"]),
                     )
+
+        existing_models = conn.execute("select 1 from model_engines limit 1").fetchone()
+        if not existing_models:
+            conn.execute(
+                "insert into model_engines (model_name, api_key, base_url, is_default, token_count) values (?, ?, ?, ?, ?)",
+                (
+                    "deepseek-v3",
+                    "sk-aigc-e501822e1a980302a16c52e514ad19dbd25d636b",
+                    "https://aigc-api.aitoolcore.com/api/v1",
+                    1,
+                    0,
+                ),
+            )
+
+        user_role = conn.execute(
+            "select id from roles where code='user'"
+        ).fetchone()
+        if user_role:
+            conn.execute(
+                "update users set role_id=? where role_id is null or role_id=0",
+                (user_role["id"],),
+            )
+            conn.execute(
+                "insert or ignore into user_roles (user_id, role_id) select id, ? from users where id not in (select user_id from user_roles)",
+                (user_role["id"],),
+            )
 
         conn.commit()

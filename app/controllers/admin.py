@@ -9,6 +9,7 @@ from app.models.admin import (
     RoleRepository,
     PermissionRepository,
 )
+from app.models.model_engine import ModelEngineRepository
 
 
 class AdminLoginHandler(BaseHandler):
@@ -98,14 +99,17 @@ class AdminPlaceholderHandler(AdminBaseHandler):
     @tornado.web.authenticated
     def get(self, module_name):
         pages = {
-            "roles": {"title": "角色管理", "icon": "layui-icon-group", "add": "角色"},
+            "roles": {
+                "title": "角色管理",
+                "icon": "layui-icon-group",
+                "add": "角色",
+            },
             "permissions": {
                 "title": "权限管理",
                 "icon": "layui-icon-auz",
                 "add": "权限",
             },
             "menus": {"title": "功能管理", "icon": "layui-icon-app", "add": "菜单"},
-            "models": {"title": "模型引擎", "icon": "layui-icon-engine", "add": "模型"},
         }
         info = pages.get(
             module_name,
@@ -116,6 +120,24 @@ class AdminPlaceholderHandler(AdminBaseHandler):
             page_title=info["title"],
             icon_class=info["icon"],
             add_label=info["add"],
+        )
+
+
+class AdminModelPageHandler(AdminBaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        page = int(self.get_argument("page", 1))
+        per_page = 6
+        models, total = ModelEngineRepository.get_all_models(page, per_page)
+        total_pages = (total + per_page - 1) // per_page
+        self.render(
+            "admin/models.html",
+            title="模型引擎",
+            username=self.current_user,
+            models=[dict(m) for m in models],
+            current_page=page,
+            total_pages=total_pages,
+            total_records=total,
         )
 
 
@@ -153,7 +175,10 @@ class AdminUserApiHandler(AdminBaseHandler):
                 self.write({"code": 0, "msg": "修改成功"})
             else:
                 self.write(
-                    {"code": -1, "msg": "修改失败，可能用户名已存在或为系统管理员"}
+                    {
+                        "code": -1,
+                        "msg": "修改失败，可能用户名已存在或为系统管理员",
+                    }
                 )
         elif action == "delete":
             if AdminUserRepository.delete_admin_user(body["id"]):
@@ -174,7 +199,7 @@ class AdminUserApiHandler(AdminBaseHandler):
             if AdminUserRepository.set_user_roles(body["id"], body.get("role_ids", [])):
                 self.write({"code": 0, "msg": "角色设置成功"})
             else:
-                self.write({"code": -1, "msg": "无法修改系统管理员角色"})
+                self.write({"code": -1, "msg": "无法为系统管理员设置角色"})
         else:
             self.write({"code": -1, "msg": "未知操作"})
 
@@ -313,8 +338,102 @@ class AdminMenuApiHandler(AdminBaseHandler):
                 )
             self.write({"code": 0, "msg": "更新成功"})
         elif action == "delete":
-            from app.models.db import get_connection
-
             with get_connection() as conn:
                 conn.execute("delete from menus where id=?", (body["id"],))
             self.write({"code": 0, "msg": "删除成功"})
+
+
+class AdminModelApiHandler(AdminBaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        page = int(self.get_argument("page", 1))
+        per_page = int(self.get_argument("limit", 6))
+        models, total = ModelEngineRepository.get_all_models(page, per_page)
+        self.write(
+            {
+                "code": 0,
+                "msg": "",
+                "count": total,
+                "data": [dict(m) for m in models],
+            }
+        )
+
+    @tornado.web.authenticated
+    def post(self):
+        body = json.loads(self.request.body)
+        action = body.get("action")
+        if action == "add":
+            model_id = ModelEngineRepository.create_model(
+                body["name"],
+                body["model_name"],
+                body["base_url"],
+                body["api_key"],
+                body.get("is_default", 0),
+            )
+            self.write({"code": 0, "msg": "添加成功", "id": model_id})
+        elif action == "update":
+            ModelEngineRepository.update_model(
+                body["id"],
+                body["name"],
+                body["model_name"],
+                body["base_url"],
+                body["api_key"],
+                body.get("is_default", 0),
+            )
+            self.write({"code": 0, "msg": "更新成功"})
+        elif action == "delete":
+            ModelEngineRepository.delete_model(body["id"])
+            self.write({"code": 0, "msg": "删除成功"})
+        elif action == "set_default":
+            ModelEngineRepository.set_default_model(body["id"])
+            self.write({"code": 0, "msg": "设置默认成功"})
+        else:
+            self.write({"code": -1, "msg": "未知操作"})
+
+
+class AdminModelTestApiHandler(AdminBaseHandler):
+    @tornado.web.authenticated
+    async def post(self):
+        self.set_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.set_header("Cache-Control", "no-cache")
+        self.set_header("Connection", "keep-alive")
+        self.set_header("X-Accel-Buffering", "no")
+
+        body = json.loads(self.request.body or b"{}")
+        model_id = body.get("id") or self.get_argument("id", None)
+        prompt = body.get("prompt", "") or self.get_argument("prompt", "")
+
+        model_info = ModelEngineRepository.get_model_by_id(model_id)
+        if not model_info:
+            self.write(f"data: {json.dumps({'error': 'Model not found'})}\n\n")
+            await self.flush()
+            return
+
+        try:
+            from openai import AsyncOpenAI
+
+            client = AsyncOpenAI(
+                api_key=model_info["api_key"], base_url=model_info["base_url"]
+            )
+            stream = await client.chat.completions.create(
+                model=model_info["model_name"],
+                messages=[{"role": "user", "content": prompt}],
+                stream=True,
+            )
+            tokens = 0
+            async for chunk in stream:
+                if chunk.choices:
+                    delta = chunk.choices[0].delta
+                    content = getattr(delta, "content", "") or ""
+                    if content:
+                        tokens += len(content)
+                        self.write(f"data: {json.dumps({'content': content})}\n\n")
+                        await self.flush()
+
+            ModelEngineRepository.increment_token_count(model_id, max(1, tokens // 2))
+            self.write("data: [DONE]\n\n")
+            await self.flush()
+
+        except Exception as e:
+            self.write(f"data: {json.dumps({'error': str(e)})}\n\n")
+            await self.flush()

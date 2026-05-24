@@ -127,7 +127,7 @@
                     { type: 'checkbox', fixed: 'left' },
                     { field: 'id', title: 'ID', width: 80, sort: true },
                     { field: 'username', title: '用户名', width: 160 },
-                    { field: 'role_names', title: '角色', minWidth: 150 },
+                    { field: 'role_names', title: '角色', minWidth: 180 },
                     { field: 'created_at', title: '创建时间', width: 180 },
                     { fixed: 'right', title: '操作', toolbar: '#toolbarTpl', width: 280 }
                 ]],
@@ -139,6 +139,10 @@
             $('#btnSearch').on('click', function () {
                 table.reload('userTable', { where: { keyword: $('#keywordInput').val() }, page: { curr: 1 } });
             });
+
+            function refreshUserTable() {
+                table.reload('userTable', { page: { curr: 1 } });
+            }
             $('#keywordInput').on('keydown', function (e) { if (e.key === 'Enter') $('#btnSearch').click(); });
 
             table.on('checkbox(userTable)', function (obj) {
@@ -194,7 +198,7 @@
                                         success: function (res) {
                                             layer.msg(res.msg, { icon: res.code === 0 ? 1 : 2 });
                                             layer.close(index);
-                                            table.reload('userTable');
+                                            refreshUserTable();
                                         }
                                     });
                                 }
@@ -232,7 +236,7 @@
                                         data: JSON.stringify({ action: 'update', id: data.id, username: username, role_ids: ids }),
                                         success: function (res) {
                                             layer.msg(res.msg, { icon: res.code === 0 ? 1 : 2 });
-                                            if (res.code === 0) { layer.close(index); table.reload('userTable'); }
+                                            if (res.code === 0) { layer.close(index); refreshUserTable(); }
                                         }
                                     });
                                 }
@@ -295,7 +299,7 @@
                         data: JSON.stringify({ action: 'batch_delete', ids: ids }),
                         success: function (res) {
                             layer.msg(res.msg, { icon: res.code === 0 ? 1 : 2 });
-                            table.reload('userTable');
+                            refreshUserTable();
                             $('#btnBatchDelete').hide();
                         }
                     });
